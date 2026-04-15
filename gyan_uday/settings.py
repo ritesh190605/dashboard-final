@@ -1,6 +1,6 @@
 """
 GyanUday University - College Management System
-Django Settings — works for local development AND Render deployment
+Django Settings — works for local + Render deployment
 """
 
 import os
@@ -17,12 +17,41 @@ SECRET_KEY = os.environ.get(
     'django-insecure-gyanuday-change-this-in-production-2024'
 )
 
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+# Default False for production safety
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = os.environ.get(
-    'ALLOWED_HOSTS',
-    'localhost,127.0.0.1,0.0.0.0'
-).split(',')
+# Hosts from env, plus required Render hosts.
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0').split(',')
+    if host.strip()
+]
+
+required_hosts = [
+    'new-dashboard-practice.onrender.com',
+    os.environ.get('RENDER_EXTERNAL_HOSTNAME', '').strip(),
+]
+for host in required_hosts:
+    if host and host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(host)
+
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',')
+    if origin.strip()
+]
+for host in required_hosts:
+    origin = f'https://{host}' if host else ''
+    if origin and origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(origin)
+
+# ✅ FIXED: Render HTTPS proxy support
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# ✅ Security settings (auto-disable in DEBUG)
+SECURE_SSL_REDIRECT = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
 
 
 # ─────────────────────────────────────────────
@@ -114,29 +143,29 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-LOGIN_URL          = '/accounts/login/'
+LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
-LOGOUT_REDIRECT_URL= '/accounts/login/'
+LOGOUT_REDIRECT_URL = '/accounts/login/'
 
 
 # ─────────────────────────────────────────────
-# INTERNATIONALISATION
+# INTERNATIONALIZATION
 # ─────────────────────────────────────────────
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE     = 'Asia/Kolkata'
-USE_I18N      = True
-USE_TZ        = True
+TIME_ZONE = 'Asia/Kolkata'
+USE_I18N = True
+USE_TZ = True
 
 
 # ─────────────────────────────────────────────
 # STATIC & MEDIA FILES
 # ─────────────────────────────────────────────
-STATIC_URL        = '/static/'
-STATICFILES_DIRS  = [BASE_DIR / 'static']
-STATIC_ROOT       = BASE_DIR / 'staticfiles'
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-MEDIA_URL  = '/media/'
+MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 
@@ -171,9 +200,9 @@ REST_FRAMEWORK = {
 # SIMPLE JWT
 # ─────────────────────────────────────────────
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME':  timedelta(hours=1),
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-    'ROTATE_REFRESH_TOKENS':  True,
+    'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': False,
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
@@ -185,9 +214,9 @@ SIMPLE_JWT = {
 from django.contrib.messages import constants as messages
 
 MESSAGE_TAGS = {
-    messages.DEBUG:   'debug',
-    messages.INFO:    'info',
+    messages.DEBUG: 'debug',
+    messages.INFO: 'info',
     messages.SUCCESS: 'success',
     messages.WARNING: 'warning',
-    messages.ERROR:   'danger',
+    messages.ERROR: 'danger',
 }
