@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block title %}Results{% endblock %}
+{% block nav_marks %}active{% endblock %}
+{% block page_title %}Student Results{% endblock %}
+{% block page_subtitle %}<span class="page-meta">{{ total }} student{{ total|pluralize }} with recorded results</span>{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'results:list' %}" class="btn btn-outline">Examinations</a>
+{% endblock %}
+
+{% block content %}
+
+<!-- Filter Bar -->
+<div class="card" style="margin-bottom:18px;">
+  <div class="card-body" style="padding:14px 18px;">
+    <form method="get" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+      <div style="flex:2;min-width:200px;">
+        <label class="form-label">Search Student</label>
+        <input type="text" name="search" value="{{ search }}" class="form-control" placeholder="Name or roll number..." />
+      </div>
+      <div style="flex:1;min-width:150px;">
+        <label class="form-label">Department</label>
+        <select name="department" class="form-control">
+          <option value="">All Departments</option>
+          {% for dept in departments %}
+            <option value="{{ dept.pk }}" {% if department_filter == dept.pk|stringformat:"s" %}selected{% endif %}>
+              {{ dept.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a href="{% url 'results:marks' %}" class="btn btn-outline" style="margin-left:6px;">Clear</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Results Table -->
+<div class="card">
+  <div class="card-body card-body--no-pad">
+    {% if students %}
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Roll No.</th>
+          <th>Department</th>
+          <th>Year / Sem</th>
+          <th>Exams Taken</th>
+          <th>Avg Score</th>
+          <th>Highest Grade</th>
+          <th>Overall</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in students %}
+        <tr>
+          <td>
+            <div class="student-cell">
+              <div class="avatar-sm" style="background:#EEF2FD;color:#185FA5;">
+                {{ row.student.get_initials }}
+              </div>
+              <div>
+                <div style="font-weight:500;">{{ row.student.get_full_name }}</div>
+                <div style="font-size:11px;color:#6B6A63;">{{ row.student.email }}</div>
+              </div>
+            </div>
+          </td>
+          <td style="font-family:'DM Mono',monospace;font-size:12px;">{{ row.student.roll_number }}</td>
+          <td style="color:#6B6A63;font-size:12px;">{{ row.student.department.name }}</td>
+          <td style="color:#6B6A63;">Y{{ row.student.year }} / S{{ row.student.semester }}</td>
+          <td style="text-align:center;">
+            <span class="badge badge--blue">{{ row.exam_count }}</span>
+          </td>
+          <td style="text-align:center;">
+            {% if row.avg_score %}
+              <span style="font-weight:600;font-family:'DM Mono',monospace;
+                color:{% if row.avg_pct >= 75 %}#1D9E75{% elif row.avg_pct >= 40 %}#BA7517{% else %}#C0392B{% endif %};">
+                {{ row.avg_score|floatformat:1 }}
+              </span>
+            {% else %}
+              <span style="color:#9C9A92;">—</span>
+            {% endif %}
+          </td>
+          <td style="text-align:center;">
+            {% if row.best_grade %}
+              <span class="badge badge--
+                {% if row.best_grade == 'O' or row.best_grade == 'A+' %}purple
+                {% elif row.best_grade == 'A' or row.best_grade == 'B+' %}green
+                {% elif row.best_grade == 'B' or row.best_grade == 'C' %}blue
+                {% elif row.best_grade == 'P' %}amber
+                {% else %}red{% endif %}">
+                {{ row.best_grade }}
+              </span>
+            {% else %}
+              <span style="color:#9C9A92;">—</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if row.avg_pct %}
+              <div class="att-cell">
+                <div class="att-bar">
+                  <div class="att-bar__fill
+                    {% if row.avg_pct >= 75 %}att-bar__fill--green
+                    {% elif row.avg_pct >= 40 %}att-bar__fill--amber
+                    {% else %}att-bar__fill--red{% endif %}"
+                    style="width:{{ row.avg_pct }}%;">
+                  </div>
+                </div>
+                <span class="att-value">{{ row.avg_pct|floatformat:0 }}%</span>
+              </div>
+            {% else %}
+              <span style="color:#9C9A92;font-size:12px;">No data</span>
+            {% endif %}
+          </td>
+          <td>
+            <a href="{% url 'results:student_result_card' row.student.pk %}"
+               class="btn btn-sm btn-outline">
+              View Card
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div style="padding:48px;text-align:center;color:#6B6A63;">
+      <p style="margin-bottom:8px;">No results found.</p>
+      <p style="font-size:13px;">
+        {% if search or department_filter %}
+          No students match your filter. <a href="{% url 'results:marks' %}" style="color:#2B5CE6;">Clear filters</a>
+        {% else %}
+          Enter exam marks first via <a href="{% url 'results:list' %}" style="color:#2B5CE6;">Examinations</a>.
+        {% endif %}
+      </p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
