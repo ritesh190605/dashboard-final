@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # dashboard-final
 =======
 # GyanUday University — College Management System
@@ -57,4 +57,3 @@ fees/         Fee management, Payment tracking
 results/      Exams, Marks, Signals, Activity Log
 dashboard/    Live dashboard with Chart.js
 ```
->>>>>>> c079e95 (dasboard)
