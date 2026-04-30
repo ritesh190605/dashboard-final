@@ -1,5 +1,4 @@
 
-# dashboard-final
 =======
 # GyanUday University — College Management System
 
